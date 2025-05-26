@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: agroconnect-backend
+    env: python
+    buildCommand: pipenv install
+    startCommand: gunicorn wsgi:app
