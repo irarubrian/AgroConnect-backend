@@ -17,7 +17,8 @@ def create_app():
     
     # Initialize Flask app
     app = Flask(__name__)
-    CORS(app)
+    CORS(app, origins=["https://agro-connect-fronted.vercel.app"], supports_credentials=True)
+
     
     # ======================
     # Configuration Section
