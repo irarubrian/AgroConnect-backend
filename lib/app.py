@@ -1,40 +1,91 @@
+# lib/app.py
+import os
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_migrate import Migrate
-import os  # ⬅️ NEW IMPORT
+from dotenv import load_dotenv
 
+# Initialize extensions
 db = SQLAlchemy()
-
-from lib.routes import init_routes
+migrate = Migrate()
 
 def create_app():
+    """Application factory pattern"""
+    # Load environment variables
+    load_dotenv()
+    
+    # Initialize Flask app
     app = Flask(__name__)
     CORS(app)
     
-    # 🔒 UPDATED CONFIG (PostgreSQL + environment variables)
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback-dev-key')  # Never hardcode in production!
+    # ======================
+    # Configuration Section
+    # ======================
     
-    # 🐘 POSTGRESQL CONFIG (Render's internal URL format)
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
-        'DATABASE_URL', 
-        'sqlite:///agroconnect.db'  # Fallback for local dev
-    ).replace('postgres://', 'postgresql://')  # Essential for Render
+    # Mandatory security configuration
+    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+    if not app.config['SECRET_KEY']:
+        raise RuntimeError("SECRET_KEY must be set in environment variables")
     
+    # PostgreSQL configuration
+    db_uri = os.getenv('DATABASE_URL')
+    if not db_uri:
+        raise RuntimeError("DATABASE_URL must be set in environment variables")
+    
+    # Fix common URI format issues
+    if db_uri.startswith('postgres://'):
+        db_uri = db_uri.replace('postgres://', 'postgresql://', 1)
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'pool_pre_ping': True,  # Helps with connection recycling
+        'pool_recycle': 300,   # Recycle connections after 5 minutes
+    }
 
+    # ======================
+    # Initialize Extensions
+    # ======================
     db.init_app(app)
-    migrate = Migrate(app, db)
+    migrate.init_app(app, db)
 
-    # ✅ Import models (keep this)
-    from lib import models
-
-    # Initialize routes
+    # ======================
+    # Register Blueprints
+    # ======================
+    from lib.routes import init_routes
     init_routes(app)
+
+    # ======================
+    # Shell Context
+    # ======================
+    @app.shell_context_processor
+    def make_shell_context():
+        from lib.models import User, Article, Crop, MarketListing, Review, CropActivity, MarketInquiry
+        return {
+            'db': db,
+            'User': User,
+            'Article': Article,
+            'Crop': Crop,
+            'MarketListing': MarketListing,
+            'Review': Review,
+            'CropActivity': CropActivity,
+            'MarketInquiry': MarketInquiry
+        }
 
     return app
 
-# 👇 ONLY FOR LOCAL DEVELOPMENT (remove in production)
+# Only for local development
 if __name__ == '__main__':
     app = create_app()
-    app.run(debug=True)
+    
+    # Additional checks for development
+    with app.app_context():
+        # Verify database connection
+        try:
+            db.engine.execute("SELECT 1")
+            print("✅ Database connection successful")
+        except Exception as e:
+            print(f"❌ Database connection failed: {str(e)}")
+    
+    app.run(debug=os.getenv('FLASK_DEBUG', 'false').lower() == 'true')

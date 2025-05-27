@@ -10,8 +10,9 @@ flask-cors = "*"
 werkzeug = "*"
 pyjwt = "*"
 gunicorn = "*"
-psycopg2-binary = "==2.9.9"
 flask-sqlalchemy = "==3.0.3"
+python-dotenv = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 

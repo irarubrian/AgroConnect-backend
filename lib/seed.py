@@ -59,7 +59,17 @@ def seed_database():
             phone='254712345682'
         )
         
-        db.session.add_all([admin, farmer1, farmer2, buyer1, expert1])
+        # Add user kenneth (farmer)
+        kenneth = User(
+            username='kenneth',
+            email='kenneth@example.com',
+            password=generate_password_hash('kenneth123', method='pbkdf2:sha256'),
+            role='farmer',
+            location='Eldoret',
+            phone='254712345683'
+        )
+        
+        db.session.add_all([admin, farmer1, farmer2, buyer1, expert1, kenneth])
         db.session.commit()
         
         # Create crops
@@ -87,7 +97,20 @@ def seed_database():
             notes='Greenhouse 2'
         )
         
-        db.session.add_all([maize_crop, tomato_crop])
+        # Add crop peas for kenneth
+        peas_crop = Crop(
+            farmer_id=kenneth.id,
+            crop_type='Peas',
+            variety='Sugar Snap',
+            planting_date=datetime.datetime(2024, 5, 1),
+            harvest_date=datetime.datetime(2024, 8, 1),
+            growth_stage='seedling',
+            soil_type='loam',
+            irrigation_method='furrow',
+            notes='First peas crop for kenneth'
+        )
+        
+        db.session.add_all([maize_crop, tomato_crop, peas_crop])
         db.session.commit()
         
         # Create crop activities

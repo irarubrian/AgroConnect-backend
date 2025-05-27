@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: agroconnect-backend
+    runtime: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn wsgi:app"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: agroconnect_prod
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+      - key: PYTHON_VERSION
+        value: 3.8.12
