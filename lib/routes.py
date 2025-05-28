@@ -40,6 +40,7 @@ def init_routes(app):
         data = request.get_json()
         
         # Check if username or email already exists
+        
         if User.query.filter_by(username=data['username']).first():
             return jsonify({'message': 'Username already exists!'}), 400
         if User.query.filter_by(email=data['email']).first():
