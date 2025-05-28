@@ -1,6 +1,6 @@
 # lib/app.py
 import os
-from flask import Flask
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 from flask_migrate import Migrate
@@ -17,19 +17,42 @@ def create_app():
     
     # Initialize Flask app
     app = Flask(__name__)
-    CORS(app, origins=["https://agro-connect-fronted.vercel.app"], supports_credentials=True)
+    
+    # ======================
+    # CORS Configuration
+    # ======================
+    CORS(app, 
+        origins=[
+            "https://agro-connect-fronted.vercel.app",  # Production frontend
+            "http://localhost:5173",                    # Vite dev server
+                            
+        ],
+        supports_credentials=True,
+        methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["*"],  # Temporarily permissive for development
+        expose_headers=["Content-Type", "X-Total-Count"],
+        max_age=600
+    )
 
-    
     # ======================
-    # Configuration Section
+    # Security Configuration
     # ======================
+    app.config.update(
+        SECRET_KEY=os.getenv('SECRET_KEY'),
+        SESSION_COOKIE_SECURE=True,
+        SESSION_COOKIE_HTTPONLY=True,
+        SESSION_COOKIE_SAMESITE='None',
+        REMEMBER_COOKIE_SECURE=True,
+        REMEMBER_COOKIE_SAMESITE='None',
+        PREFERRED_URL_SCHEME='https'  # Force HTTPS in URL generation
+    )
     
-    # Mandatory security configuration
-    app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
     if not app.config['SECRET_KEY']:
         raise RuntimeError("SECRET_KEY must be set in environment variables")
-    
-    # PostgreSQL configuration
+
+    # ======================
+    # Database Configuration
+    # ======================
     db_uri = os.getenv('DATABASE_URL')
     if not db_uri:
         raise RuntimeError("DATABASE_URL must be set in environment variables")
@@ -41,8 +64,10 @@ def create_app():
     app.config['SQLALCHEMY_DATABASE_URI'] = db_uri
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-        'pool_pre_ping': True,  # Helps with connection recycling
-        'pool_recycle': 300,   # Recycle connections after 5 minutes
+        'pool_pre_ping': True,
+        'pool_recycle': 300,
+        'pool_size': 20,
+        'max_overflow': 30
     }
 
     # ======================
@@ -50,6 +75,37 @@ def create_app():
     # ======================
     db.init_app(app)
     migrate.init_app(app, db)
+
+    # ======================
+    # Request Handling
+    # ======================
+    @app.before_request
+    def before_request():
+        """Log all incoming requests"""
+        app.logger.info(f"Incoming {request.method} request to {request.url}")
+
+    @app.after_request
+    def after_request(response):
+        """Add security headers to all responses"""
+        response.headers.update({
+            'Access-Control-Allow-Credentials': 'true',
+            'X-Content-Type-Options': 'nosniff',
+            'X-Frame-Options': 'SAMEORIGIN',
+            'X-XSS-Protection': '1; mode=block',
+            'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload'
+        })
+        return response
+
+    # ======================
+    # Error Handling
+    # ======================
+    @app.errorhandler(404)
+    def not_found(error):
+        return {"error": "Resource not found"}, 404
+
+    @app.errorhandler(500)
+    def internal_error(error):
+        return {"error": "Internal server error"}, 500
 
     # ======================
     # Register Blueprints
@@ -76,17 +132,21 @@ def create_app():
 
     return app
 
-# Only for local development
+# Application entry point
 if __name__ == '__main__':
     app = create_app()
     
-    # Additional checks for development
+    # Development-specific configurations
     with app.app_context():
         # Verify database connection
         try:
             db.engine.execute("SELECT 1")
-            print("✅ Database connection successful")
+            app.logger.info("✅ Database connection successful")
         except Exception as e:
-            print(f"❌ Database connection failed: {str(e)}")
+            app.logger.error(f"❌ Database connection failed: {str(e)}")
     
-    app.run(debug=os.getenv('FLASK_DEBUG', 'false').lower() == 'true')
+    app.run(
+        host=os.getenv('FLASK_HOST', '0.0.0.0'),
+        port=int(os.getenv('FLASK_PORT', 5000)),
+        debug=os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
+    )
