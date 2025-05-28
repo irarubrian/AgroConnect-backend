@@ -1,20 +1,10 @@
 services:
   - type: web
-    name: agroconnect-backend
+    name: flask-bookshop-api
     env: python
-    python:
-      version: "3.8.13"
-    build:
-      commands:
-        - chmod +x build.sh
-        - ./build.sh
-    start: "gunicorn --workers 4 --timeout 120 wsgi:app --bind 0.0.0.0:$PORT"
-    envVars:
-      - key: DATABASE_URL
-        fromDatabase: true
-      - key: SECRET_KEY
-        generateValue: true
-      - key: FLASK_ENV
-        value: production
-      - key: FLASK_APP
-        value: "wsgi:app"
+    buildCommand: "./render-build.sh"
+    startCommand: "gunicorn wsgi:app"
+    plan: free
+    branch: master
+    runtime: python
+    autoDeploy: true
