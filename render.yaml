@@ -1,18 +1,13 @@
 services:
   - type: web
     name: agroconnect-backend
-    runtime: python
-    buildCommand: "./render-build.sh"
-    startCommand: "poetry run gunicorn --bind :$PORT --workers 2 --threads 8 --timeout 0 wsgi:app"
-    pythonVersion: "3.8.12"
+    env: python
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn wsgi:app --bind 0.0.0.0:$PORT"
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: agroconnect_prod
-          property: connectionString
+        value: postgresql://agroconnect_prod_user:2ZAahxLc6Ha78PACUnuEiTOzDtZ1ONS7@35.227.164.209/agroconnect_prod
       - key: SECRET_KEY
-        generateValue: true
-      - key: FLASK_APP
-        value: "wsgi.py"
+        value: b839b7289a5671c8bede7e6f9b0fb794d1008f3aa5553233e3ddfebbb92a500e
       - key: FLASK_ENV
-        value: "production"
+        value: production
