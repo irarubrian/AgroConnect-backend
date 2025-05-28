@@ -4,15 +4,16 @@ services:
     env: python
     python:
       version: "3.8.13"
-    buildCommand:
-      - chmod +x build.sh
-      - ./build.sh
-    startCommand: "gunicorn wsgi:app --bind 0.0.0.0:$PORT"
+    build:
+      commands:
+        - chmod +x build.sh
+        - ./build.sh
+    start: "gunicorn --workers 4 --timeout 120 wsgi:app --bind 0.0.0.0:$PORT"
     envVars:
       - key: DATABASE_URL
-        fromDatabase: true  # SECURITY: Remove hardcoded value
+        fromDatabase: true
       - key: SECRET_KEY
-        generateValue: true  # SECURITY: Let Render generate this
+        generateValue: true
       - key: FLASK_ENV
         value: production
       - key: FLASK_APP
