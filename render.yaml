@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: agroconnect-backend
+    env: python
+    python:
+      version: "3.8.13"
+    buildCommand:
+      - chmod +x build.sh
+      - ./build.sh
+    startCommand: "gunicorn wsgi:app --bind 0.0.0.0:$PORT"
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase: true  # SECURITY: Remove hardcoded value
+      - key: SECRET_KEY
+        generateValue: true  # SECURITY: Let Render generate this
+      - key: FLASK_ENV
+        value: production
+      - key: FLASK_APP
+        value: "wsgi:app"

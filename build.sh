@@ -1,7 +1,11 @@
 #!/bin/bash
-echo "Installing dependencies..."
-pipenv install -r requirements.txt
+set -o errexit
 
-# Optional: Migrations
-echo "Running migrations..."
-alembic upgrade head
+# Install Pipenv
+pip install pipenv
+
+# Install dependencies system-wide
+pipenv install --system --deploy
+
+# Run migrations
+flask db upgrade

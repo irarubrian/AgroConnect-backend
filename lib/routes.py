@@ -6,9 +6,7 @@ from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
 from lib.models import db, User, Crop, MarketListing, Article, Review, MarketInquiry, CropActivity
 
-@app.route('/', methods=['GET'])
-def index():
-    return {"message": "Backend is alive!"}, 200
+
 
 def token_required(f):
     @wraps(f)
