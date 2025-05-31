@@ -1,18 +1,13 @@
 #!/bin/bash
-set -ex  # Enable debugging
+set -ex
 
-# 1. Ensure correct Python version
-python3.8 --version
+# Local development setup
+python3.8 -m venv venv
+source venv/bin/activate
 
-# 2. Install Pipenv explicitly
-python3.8 -m pip install --upgrade pip
-python3.8 -m pip install pipenv
+pip install --upgrade pip
+pip install pipenv
+pipenv install --dev
 
-# 3. System-wide install
-python3.8 -m pipenv install --system --deploy
-
-# 4. Verify installed packages
-pip freeze
-
-# 5. Run migrations
-python3.8 -m flask db upgrade
+flask db upgrade
+flask seed run  # If you have seed data
