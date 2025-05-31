@@ -1,16 +1,18 @@
 #!/bin/bash
-set -ex  # Enable debugging and exit on error
+set -ex
 
-# 1. Verify Python version matches runtime.txt
+# 1. Verify Python version
 python --version
 
-# 2. Install dependencies
+# 2. Install dependencies from requirements.txt
 pip install --upgrade pip
-pip install pipenv
-pipenv install --system --deploy
+pip install -r requirements.txt
 
-# 3. Database migrations
-flask db upgrade
+# 3. Run migrations if database exists
+if [ -d "migrations" ]; then
+  flask db upgrade
+fi
 
-# 4. Verify installed packages
-pip freeze
+# 4. Verify critical paths
+ls -la
+python -c "from wsgi import app; print(app)"

@@ -1,13 +1,13 @@
 services:
   - type: web
-    name: flask-bookshop-api
+    name: agroconnect-backend
     env: python
-    region: frankfurt  # Choose your preferred region
+    region: frankfurt
     plan: free
     branch: master
-    runtime: python-3.8.12  # Must match runtime.txt
-    buildCommand: "./render-build.sh"
-    startCommand: "gunicorn --worker-class gevent --timeout 120 --bind 0.0.0.0:$PORT wsgi:app"
+    runtime: python-3.8.12
+    buildCommand: "chmod +x render-build.sh && ./render-build.sh"
+    startCommand: "gunicorn --worker-class gevent --workers 1 --timeout 120 --bind 0.0.0.0:$PORT wsgi:app"
     envVars:
       - key: FLASK_APP
         value: "wsgi:app"
@@ -17,6 +17,12 @@ services:
         generateValue: true
       - key: DATABASE_URL
         fromDatabase:
-          name: agroconnect_prod # Must match your database service name
+          name: agroconnect-prod
           property: connectionString
     autoDeploy: true
+
+databases:
+  - name: agroconnect-prod
+    databaseName: agroconnect_prod
+    user: agroconnect_user
+    plan: free
