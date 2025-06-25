@@ -11,7 +11,11 @@ def create_app():
     app = Flask(__name__)
     
     # Configuration
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///agroconnect.db'
+    db_url = os.environ.get('DATABASE_URL')
+    if not db_url:
+        raise RuntimeError('DATABASE_URL environment variable must be set for production.')
+    app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+    app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev_secret_key')
     app.config['FRONTEND_BASE_URL'] = os.environ.get('FRONTEND_BASE_URL', 'http://localhost:5173')
     app.config['FRONTEND_ROUTES'] = {
         'HOME': '/',
