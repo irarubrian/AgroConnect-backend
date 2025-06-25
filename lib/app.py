@@ -12,31 +12,28 @@ migrate = Migrate()
 
 def create_app():
     """Application factory pattern"""
-    # Load environment variables
+
     load_dotenv()
     
-    # Initialize Flask app
+    
     app = Flask(__name__)
     
-    # ======================
-    # CORS Configuration
-    # ======================
-    CORS(app, 
+    CORS(app,
         origins=[
-            "https://agro-connect-fronted.vercel.app",  # Production frontend
-            "http://localhost:5173",                    # Vite dev server
-                            
+            "https://agro-connect-fronted.vercel.app",  
+            "http://localhost:5173",                   
+            "http://127.0.0.1:5173",                   
+            "http://localhost:3000",                   
+            "http://127.0.0.1:3000"    
         ],
         supports_credentials=True,
         methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["*"],  # Temporarily permissive for development
+        allow_headers=["Content-Type", "Authorization", "X-Requested-With", "x-access-token"],
         expose_headers=["Content-Type", "X-Total-Count"],
         max_age=600
     )
 
-    # ======================
-    # Security Configuration
-    # ======================
+
     app.config.update(
         SECRET_KEY=os.getenv('SECRET_KEY'),
         SESSION_COOKIE_SECURE=True,
@@ -44,7 +41,7 @@ def create_app():
         SESSION_COOKIE_SAMESITE='None',
         REMEMBER_COOKIE_SECURE=True,
         REMEMBER_COOKIE_SAMESITE='None',
-        PREFERRED_URL_SCHEME='https'  # Force HTTPS in URL generation
+        PREFERRED_URL_SCHEME='https' 
     )
     
     if not app.config['SECRET_KEY']:
@@ -70,15 +67,11 @@ def create_app():
         'max_overflow': 30
     }
 
-    # ======================
-    # Initialize Extensions
-    # ======================
+    
     db.init_app(app)
     migrate.init_app(app, db)
 
-    # ======================
-    # Request Handling
-    # ======================
+   
     @app.before_request
     def before_request():
         """Log all incoming requests"""
@@ -96,9 +89,7 @@ def create_app():
         })
         return response
 
-    # ======================
-    # Error Handling
-    # ======================
+    
     @app.errorhandler(404)
     def not_found(error):
         return {"error": "Resource not found"}, 404
@@ -113,9 +104,6 @@ def create_app():
     from lib.routes import init_routes
     init_routes(app)
 
-    # ======================
-    # Shell Context
-    # ======================
     @app.shell_context_processor
     def make_shell_context():
         from lib.models import User, Article, Crop, MarketListing, Review, CropActivity, MarketInquiry
@@ -136,17 +124,17 @@ def create_app():
 if __name__ == '__main__':
     app = create_app()
     
-    # Development-specific configurations
+    
     with app.app_context():
         # Verify database connection
         try:
             db.engine.execute("SELECT 1")
             app.logger.info("✅ Database connection successful")
         except Exception as e:
-            app.logger.error(f"❌ Database connection failed: {str(e)}")
+            app.logger.error(f" Database connection failed: {str(e)}")
     
     app.run(
         host=os.getenv('FLASK_HOST', '0.0.0.0'),
-        port=int(os.getenv('FLASK_PORT', 5000)),
+        port=5000,
         debug=os.getenv('FLASK_DEBUG', 'false').lower() == 'true'
     )

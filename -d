@@ -1,0 +1,15 @@
+{"error":"Resource not found"}
+--_curl_--
+>     "username": "testfarmer"
+--_curl_--
+>     "email": "farmer@example.com"
+--_curl_--
+>     "password": "farm123"
+--_curl_--
+>     "role": "farmer"
+--_curl_--
+>     "location": "Nairobi
+--_curl_-- Kenya"
+--_curl_--
+>     "phone": "+254700000000"
+>   
