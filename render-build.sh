@@ -10,7 +10,7 @@ pip install -r requirements.txt
 
 # 3. Run migrations if database exists
 if [ -d "migrations" ]; then
-  flask db upgrade
+  python -m flask db upgrade
 fi
 
 # 4. Verify critical paths
